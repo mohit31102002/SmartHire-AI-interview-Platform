@@ -12,7 +12,10 @@ export class DatabaseStorage implements IStorage {
   async createInterview(insertInterview: InsertInterview): Promise<Interview> {
     const [interview] = await db
       .insert(interviews)
-      .values(insertInterview)
+      .values({
+        ...insertInterview,
+        answers: insertInterview.answers || [],
+      })
       .returning();
     return interview;
   }
