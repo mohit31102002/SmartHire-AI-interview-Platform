@@ -58,7 +58,8 @@ export const jobRoles = [
   "Java Developer",
   "Python Developer",
   "Frontend Developer",
-  "Backend Developer"
+  "Backend Developer",
+  "Quality Assurance Engineer"
 ] as const;
 
 export type JobRole = typeof jobRoles[number];
