@@ -4,12 +4,16 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import Webcam from "@/components/webcam";
 import VoiceInput from "@/components/voice-input";
 import CodeEditor from "@/components/code-editor";
 import Timer from "@/components/timer";
 import { apiRequest } from "@/lib/queryClient";
 import type { Interview } from "@shared/schema";
+import { AlertTriangle } from "lucide-react";
+
+const MAX_TAB_SWITCHES = 3;
 
 function isCodeQuestion(question: string): boolean {
   const codeKeywords = [
@@ -33,6 +37,7 @@ export default function Interview() {
   const [code, setCode] = useState("");
   const [score, setScore] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [showCameraWarning, setShowCameraWarning] = useState(false);
   const TOTAL_DURATION = 1200; // 20 minutes in seconds
 
   const { data: interview } = useQuery<Interview>({
@@ -43,6 +48,19 @@ export default function Interview() {
     queryKey: [`/api/questions/${interview?.role}/${currentQuestion}`],
     enabled: !!interview?.role,
   });
+
+  // Handle camera presence warning
+  useEffect(() => {
+    const checkCameraPresence = () => {
+      // This is a placeholder. The actual implementation will come from your Webcam component
+      // which should emit an event when the user is not visible
+      const userVisible = true; // This should be replaced with actual camera check
+      setShowCameraWarning(!userVisible);
+    };
+
+    const interval = setInterval(checkCameraPresence, 5000); // Check every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (currentQuestionData?.question) {
@@ -101,14 +119,25 @@ export default function Interview() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setTabSwitches(prev => prev + 1);
+        setTabSwitches(prev => {
+          const newCount = prev + 1;
+          if (newCount >= MAX_TAB_SWITCHES) {
+            submitMutation.mutate();
+            toast({
+              title: "Interview Terminated",
+              description: "Maximum tab switches exceeded. Your interview has been automatically submitted.",
+              variant: "destructive",
+            });
+          }
+          return newCount;
+        });
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [submitMutation, toast]);
 
   if (!interview || !currentQuestionData) {
     return (
@@ -155,6 +184,16 @@ export default function Interview() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
+        {showCameraWarning && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Warning</AlertTitle>
+            <AlertDescription>
+              Please ensure you are visible in the camera frame.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-4">
             <Webcam />
@@ -169,7 +208,7 @@ export default function Interview() {
                   Current Score: <span className="font-mono">{score}/10</span>
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Tab switches: <span className="font-mono">{tabSwitches}</span>
+                  Tab switches: <span className="font-mono text-destructive">{tabSwitches}/{MAX_TAB_SWITCHES}</span>
                 </p>
               </CardContent>
             </Card>

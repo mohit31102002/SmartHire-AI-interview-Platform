@@ -4,7 +4,7 @@ import { jobRoles } from "@shared/schema";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { Laptop, Database, LineChart, Code, Brain } from "lucide-react";
+import { Laptop, Database, LineChart, Code, Brain, TestTube } from "lucide-react";
 
 const roleIcons = {
   "Full Stack Developer": Laptop,
@@ -15,6 +15,7 @@ const roleIcons = {
   "Python Developer": Code,
   "Frontend Developer": Laptop,
   "Backend Developer": Database,
+  "Quality Assurance Engineer": TestTube
 };
 
 export default function Home() {
@@ -51,8 +52,7 @@ export default function Home() {
             </h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Experience the future of technical interviews with our AI-powered platform. 
-            Select your role to begin a 15-minute assessment.
+            Experience the future of technical interviews with our AI-powered platform.
           </p>
         </div>
 
