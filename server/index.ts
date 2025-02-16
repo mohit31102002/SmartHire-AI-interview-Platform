@@ -37,9 +37,40 @@ app.use((req, res, next) => {
   next();
 });
 
+let server: any = null;
+
+async function shutdownServer() {
+  if (server) {
+    return new Promise((resolve) => {
+      server.close(() => {
+        log('Server shutdown complete');
+        resolve(true);
+      });
+    });
+  }
+  return Promise.resolve(true);
+}
+
+process.on('SIGTERM', async () => {
+  log('SIGTERM received. Shutting down gracefully...');
+  await shutdownServer();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  log('SIGINT received. Shutting down gracefully...');
+  await shutdownServer();
+  process.exit(0);
+});
+
 (async () => {
   try {
-    const server = await registerRoutes(app);
+    log("Initializing server...");
+
+    // First ensure any existing server is properly shutdown
+    await shutdownServer();
+
+    server = await registerRoutes(app);
 
     // Global error handler
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -49,24 +80,37 @@ app.use((req, res, next) => {
       res.status(status).json({ message });
     });
 
-    // Development mode setup
-    if (app.get("env") === "development") {
-      await setupVite(app, server);
-    } else {
-      serveStatic(app);
+    const isDevelopment = app.get("env") === "development";
+
+    try {
+      if (isDevelopment) {
+        log("Setting up Vite for development...");
+        await setupVite(app, server);
+        log("Vite setup completed successfully");
+      } else {
+        log("Setting up static file serving for production...");
+        serveStatic(app);
+        log("Static file serving setup completed");
+      }
+    } catch (setupError) {
+      console.error('Setup error:', setupError);
+      throw setupError;
     }
 
-    // Bind to all network interfaces
-    const PORT = process.env.PORT || 5000;
-    server.listen(PORT, "0.0.0.0", () => {
-      log(`Server running on port ${PORT}`);
-    });
+    // Bind to port 5000 consistently
+    const PORT = 5000;
 
-    // Handle server errors
-    server.on('error', (error: any) => {
-      console.error('Server startup error:', error);
+    server.listen(PORT, () => {
+      log(`Server running on port ${PORT}`);
+    }).on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Please ensure no other process is using this port.`);
+      } else {
+        console.error('Server startup error:', error);
+      }
       process.exit(1);
     });
+
   } catch (error) {
     console.error('Application startup error:', error);
     process.exit(1);
