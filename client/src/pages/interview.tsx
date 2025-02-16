@@ -44,38 +44,21 @@ export default function Interview() {
 
   // Speak the question using native Web Speech API
   useEffect(() => {
-    let mounted = true;
-    
-    async function setupVoice() {
-      if (!currentQuestionData?.question || !mounted) return;
-      
+    if (currentQuestionData?.question) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(currentQuestionData.question);
       utterance.rate = 0.9;
       utterance.pitch = 1;
-      
-      // Wait for voices to load
-      if (window.speechSynthesis.getVoices().length === 0) {
-        await new Promise(resolve => {
-          window.speechSynthesis.onvoiceschanged = resolve;
-        });
-      }
-      
       const voices = window.speechSynthesis.getVoices();
       const englishVoice = voices.find(voice => 
         voice.lang.startsWith('en') && voice.name.includes('Google')
       );
-      
-      if (englishVoice && mounted) {
+      if (englishVoice) {
         utterance.voice = englishVoice;
-        window.speechSynthesis.speak(utterance);
       }
+      window.speechSynthesis.speak(utterance);
     }
-    
-    setupVoice();
-    
     return () => {
-      mounted = false;
       window.speechSynthesis.cancel();
     };
   }, [currentQuestionData?.question]);

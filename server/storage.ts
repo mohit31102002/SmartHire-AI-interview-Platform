@@ -26,27 +26,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInterview(id: number, data: Partial<Interview>): Promise<Interview> {
-    return await db.transaction(async (tx) => {
-      const [interview] = await tx
-        .select()
-        .from(interviews)
-        .where(eq(interviews.id, id));
+    const [updated] = await db
+      .update(interviews)
+      .set({
+        ...data,
+        ...(data.completed ? { completedAt: new Date() } : {}),
+      })
+      .where(eq(interviews.id, id))
+      .returning();
 
-      if (!interview) {
-        throw new Error("Interview not found");
-      }
+    if (!updated) {
+      throw new Error("Interview not found");
+    }
 
-      const [updated] = await tx
-        .update(interviews)
-        .set({
-          ...data,
-          ...(data.completed ? { completedAt: new Date() } : {}),
-        })
-        .where(eq(interviews.id, id))
-        .returning();
-
-      return updated;
-    });
+    return updated;
   }
 }
 
