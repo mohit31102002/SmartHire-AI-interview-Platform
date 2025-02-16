@@ -5,8 +5,6 @@ import { insertInterviewSchema } from "@shared/schema";
 import { generateQuestion, generateFeedback } from "./services/gemini";
 
 export async function registerRoutes(app: Express) {
-  const httpServer = createServer(app);
-
   app.post("/api/interviews", async (req, res) => {
     const parsed = insertInterviewSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -56,6 +54,4 @@ export async function registerRoutes(app: Express) {
       res.status(500).json({ error: "Failed to generate question" });
     }
   });
-
-  return httpServer;
 }
