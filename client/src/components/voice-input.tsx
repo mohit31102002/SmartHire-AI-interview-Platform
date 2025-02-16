@@ -20,6 +20,7 @@ export default function VoiceInput({ onTranscript }: VoiceInputProps) {
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const lastTranscriptRef = useRef<string>("");
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
@@ -32,10 +33,15 @@ export default function VoiceInput({ onTranscript }: VoiceInputProps) {
         let finalTranscript = '';
         let interimTranscript = '';
 
-        for (let i = 0; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           if (result.isFinal) {
-            finalTranscript += result[0].transcript;
+            const transcript = result[0].transcript.trim();
+            // Only add if it's not a duplicate of the last transcript
+            if (transcript !== lastTranscriptRef.current) {
+              finalTranscript += transcript + ' ';
+              lastTranscriptRef.current = transcript;
+            }
           } else {
             interimTranscript += result[0].transcript;
           }
@@ -50,12 +56,12 @@ export default function VoiceInput({ onTranscript }: VoiceInputProps) {
         timeoutRef.current = setTimeout(() => {
           if (finalTranscript) {
             setTranscript(prev => {
-              const updated = (prev + ' ' + finalTranscript).trim();
-              onTranscript(updated);
-              return updated;
+              const updated = prev + ' ' + finalTranscript.trim();
+              onTranscript(updated.trim());
+              return updated.trim();
             });
           }
-        }, 500); // Wait for 500ms to accumulate speech before updating
+        }, 500);
       };
 
       recognitionRef.current.onerror = (event: any) => {
@@ -91,7 +97,7 @@ export default function VoiceInput({ onTranscript }: VoiceInputProps) {
       recognitionRef.current?.stop();
       setIsListening(false);
     } else {
-      setTranscript(""); // Clear previous transcript
+      lastTranscriptRef.current = ""; // Reset last transcript
       recognitionRef.current?.start();
       setIsListening(true);
     }
