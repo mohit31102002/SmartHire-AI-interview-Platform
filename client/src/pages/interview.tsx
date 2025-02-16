@@ -8,6 +8,7 @@ import Webcam from "@/components/webcam";
 import VoiceInput from "@/components/voice-input";
 import Timer from "@/components/timer";
 import { apiRequest } from "@/lib/queryClient";
+import WindowCheck from "@/components/window-check";
 
 export default function Interview() {
   const { id } = useParams();
@@ -91,7 +92,8 @@ export default function Interview() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted p-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5 p-6">
+      <WindowCheck />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-4">
@@ -100,39 +102,46 @@ export default function Interview() {
               duration={900}
               onComplete={() => submitMutation.mutate()}
             />
-            <Card>
+            <Card className="border-primary/20 shadow-lg">
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground">
-                  Tab switches: {tabSwitches}/3
+                  Tab switches: <span className="font-mono">{tabSwitches}/3</span>
                 </p>
               </CardContent>
             </Card>
           </div>
 
           <div className="md:col-span-2 space-y-4">
-            <Card>
+            <Card className="border-primary/20 shadow-lg bg-gradient-to-br from-background to-primary/5">
               <CardHeader>
-                <CardTitle>
-                  Question {currentQuestion + 1} of {questions.length}
+                <CardTitle className="flex items-center justify-between">
+                  <span>Question {currentQuestion + 1} of {questions.length}</span>
+                  <span className="text-sm font-normal text-muted-foreground">
+                    Time Remaining
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg">{questions[currentQuestion]}</p>
+                <p className="text-lg font-medium">{questions[currentQuestion]}</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-primary/20 shadow-lg">
               <CardContent className="pt-6">
                 <VoiceInput onTranscript={setCurrentAnswer} />
-                
-                <div className="flex justify-between mt-4">
+
+                <div className="flex justify-between mt-6">
                   <Button
                     variant="destructive"
                     onClick={() => submitMutation.mutate()}
+                    className="bg-red-500 hover:bg-red-600"
                   >
                     Abort Interview
                   </Button>
-                  <Button onClick={handleNext}>
+                  <Button 
+                    onClick={handleNext}
+                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+                  >
                     {currentQuestion === questions.length - 1 ? "Finish" : "Next Question"}
                   </Button>
                 </div>
