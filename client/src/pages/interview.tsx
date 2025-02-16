@@ -30,7 +30,8 @@ export default function Interview() {
   const [tabSwitches, setTabSwitches] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [code, setCode] = useState("");
-  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes
 
   const { data: interview } = useQuery<Interview>({
     queryKey: [`/api/interviews/${id}`],
@@ -44,16 +45,10 @@ export default function Interview() {
   // Speak the question using native Web Speech API
   useEffect(() => {
     if (currentQuestionData?.question) {
-      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
-
       const utterance = new SpeechSynthesisUtterance(currentQuestionData.question);
-
-      // Set voice properties
-      utterance.rate = 0.9; // Slightly slower for clarity
+      utterance.rate = 0.9;
       utterance.pitch = 1;
-
-      // Try to use a natural-sounding voice
       const voices = window.speechSynthesis.getVoices();
       const englishVoice = voices.find(voice => 
         voice.lang.startsWith('en') && voice.name.includes('Google')
@@ -61,11 +56,8 @@ export default function Interview() {
       if (englishVoice) {
         utterance.voice = englishVoice;
       }
-
       window.speechSynthesis.speak(utterance);
     }
-
-    // Cleanup on unmount or question change
     return () => {
       window.speechSynthesis.cancel();
     };
@@ -73,10 +65,15 @@ export default function Interview() {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
+      const finalScore = answers.reduce((acc, answer) => {
+        const length = answer.answer.trim().length;
+        return acc + (length > 50 ? 1 : 0);
+      }, 0);
       await apiRequest("PATCH", `/api/interviews/${id}`, {
         answers,
         completed: true,
         tabSwitches,
+        score: finalScore,
         duration: 900 - timeLeft,
       });
     },
@@ -86,12 +83,25 @@ export default function Interview() {
   });
 
   useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 0) {
+          clearInterval(timer);
+          submitMutation.mutate();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [submitMutation]);
+
+  useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setTabSwitches(prev => prev + 1);
       }
     };
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -112,7 +122,6 @@ export default function Interview() {
     );
   }
 
-
   function handleNext() {
     if (!currentAnswer.trim() && !code.trim()) {
       toast({
@@ -123,15 +132,17 @@ export default function Interview() {
       return;
     }
 
+    const answer = isCodeQuestion(currentQuestionData.question) ? code : currentAnswer;
     setAnswers(prev => [...prev, {
       question: currentQuestionData.question,
-      answer: isCodeQuestion(currentQuestionData.question) ? code : currentAnswer
+      answer
     }]);
-
+    if (answer.trim().length > 50) {
+      setScore(prev => prev + 1);
+    }
     setCurrentAnswer("");
     setCode("");
-
-    if (currentQuestion === 9) { // 10 questions total
+    if (currentQuestion === 9) {
       submitMutation.mutate();
     } else {
       setCurrentQuestion(prev => prev + 1);
@@ -152,7 +163,10 @@ export default function Interview() {
             <Card className="border-primary/20 shadow-lg">
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground">
-                  Tab switches: <span className="font-mono">{tabSwitches}/3</span>
+                  Current Score: <span className="font-mono">{score}/10</span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Tab switches: <span className="font-mono">{tabSwitches}</span>
                 </p>
               </CardContent>
             </Card>
