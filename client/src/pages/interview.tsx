@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Webcam from "@/components/webcam";
 import VoiceInput from "@/components/voice-input";
+import CodeEditor from "@/components/code-editor";
 import Timer from "@/components/timer";
+import WindowCheck from "@/components/window-check";
 import { apiRequest } from "@/lib/queryClient";
+import type { Interview } from "@shared/schema";
 
 export default function Interview() {
   const { id } = useParams();
@@ -17,15 +20,25 @@ export default function Interview() {
   const [answers, setAnswers] = useState<{question: string, answer: string}[]>([]);
   const [tabSwitches, setTabSwitches] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState("");
+  const [code, setCode] = useState("");
+  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
 
-  const { data: interview } = useQuery({
+  const { data: interview } = useQuery<Interview>({
     queryKey: [`/api/interviews/${id}`],
   });
 
-  const { data: currentQuestionData, isLoading: isLoadingQuestion } = useQuery({
+  const { data: currentQuestionData, isLoading: isLoadingQuestion } = useQuery<{question: string}>({
     queryKey: [`/api/questions/${interview?.role}/${currentQuestion}`],
     enabled: !!interview?.role,
   });
+
+  // Speak the question using native Web Speech API
+  useEffect(() => {
+    if (currentQuestionData?.question) {
+      const utterance = new SpeechSynthesisUtterance(currentQuestionData.question);
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [currentQuestionData?.question]);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -40,8 +53,6 @@ export default function Interview() {
       navigate(`/results/${id}`);
     },
   });
-
-  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -76,8 +87,12 @@ export default function Interview() {
     );
   }
 
+  const isCodeQuestion = currentQuestionData.question.toLowerCase().includes('code') || 
+                        currentQuestionData.question.toLowerCase().includes('program') ||
+                        currentQuestionData.question.toLowerCase().includes('implement');
+
   function handleNext() {
-    if (!currentAnswer.trim()) {
+    if (!currentAnswer.trim() && !code.trim()) {
       toast({
         title: "Empty Answer",
         description: "Please provide an answer before continuing",
@@ -88,20 +103,24 @@ export default function Interview() {
 
     setAnswers(prev => [...prev, {
       question: currentQuestionData.question,
-      answer: currentAnswer
+      answer: isCodeQuestion ? code : currentAnswer
     }]);
 
     setCurrentAnswer("");
+    setCode("");
 
     if (currentQuestion === 9) { // 10 questions total
       submitMutation.mutate();
     } else {
       setCurrentQuestion(prev => prev + 1);
+      // Clear previous speech synthesis queue
+      window.speechSynthesis.cancel();
     }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5 p-6">
+      <WindowCheck />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-4">
@@ -124,9 +143,19 @@ export default function Interview() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Question {currentQuestion + 1} of 10</span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    Time Remaining
-                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      if (currentQuestionData.question) {
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance(currentQuestionData.question);
+                        window.speechSynthesis.speak(utterance);
+                      }
+                    }}
+                  >
+                    🔊 Read Question
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -142,7 +171,11 @@ export default function Interview() {
 
             <Card className="border-primary/20 shadow-lg">
               <CardContent className="pt-6">
-                <VoiceInput onTranscript={setCurrentAnswer} />
+                {isCodeQuestion ? (
+                  <CodeEditor value={code} onChange={(value) => setCode(value ?? "")} />
+                ) : (
+                  <VoiceInput onTranscript={setCurrentAnswer} />
+                )}
 
                 <div className="flex justify-between mt-6">
                   <Button

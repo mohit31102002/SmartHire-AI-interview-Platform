@@ -1,5 +1,6 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { type Interview } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, Clock, MousePointer2, Check, X, Brain, TrendingUp, AlertTriangle } from "lucide-react";
@@ -8,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 export default function Results() {
   const { id } = useParams();
 
-  const { data: interview } = useQuery({
+  const { data: interview } = useQuery<Interview>({
     queryKey: [`/api/interviews/${id}`],
   });
 
@@ -92,7 +93,7 @@ export default function Results() {
                     )}
                     <div>
                       <div className="font-medium mb-2">Q{index + 1}: {qa.question}</div>
-                      <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                      <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg whitespace-pre-wrap font-mono">
                         {qa.answer}
                       </div>
                     </div>
@@ -125,6 +126,10 @@ export default function Results() {
             Start New Interview
           </Button>
         </div>
+
+        <footer className="text-center text-sm text-muted-foreground mt-8">
+          Designed and developed by The Code Buster
+        </footer>
       </div>
     </div>
   );
