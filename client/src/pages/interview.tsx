@@ -11,6 +11,16 @@ import Timer from "@/components/timer";
 import { apiRequest } from "@/lib/queryClient";
 import type { Interview } from "@shared/schema";
 
+function isCodeQuestion(question: string): boolean {
+  const codeKeywords = [
+    'code', 'program', 'implement', 'function', 'write', 'algorithm',
+    'class', 'method', 'data structure', 'leetcode', 'coding'
+  ];
+  return codeKeywords.some(keyword => 
+    question.toLowerCase().includes(keyword)
+  );
+}
+
 export default function Interview() {
   const { id } = useParams();
   const [, navigate] = useLocation();
@@ -34,9 +44,31 @@ export default function Interview() {
   // Speak the question using native Web Speech API
   useEffect(() => {
     if (currentQuestionData?.question) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance(currentQuestionData.question);
+
+      // Set voice properties
+      utterance.rate = 0.9; // Slightly slower for clarity
+      utterance.pitch = 1;
+
+      // Try to use a natural-sounding voice
+      const voices = window.speechSynthesis.getVoices();
+      const englishVoice = voices.find(voice => 
+        voice.lang.startsWith('en') && voice.name.includes('Google')
+      );
+      if (englishVoice) {
+        utterance.voice = englishVoice;
+      }
+
       window.speechSynthesis.speak(utterance);
     }
+
+    // Cleanup on unmount or question change
+    return () => {
+      window.speechSynthesis.cancel();
+    };
   }, [currentQuestionData?.question]);
 
   const submitMutation = useMutation({
@@ -80,9 +112,6 @@ export default function Interview() {
     );
   }
 
-  const isCodeQuestion = currentQuestionData.question.toLowerCase().includes('code') || 
-                        currentQuestionData.question.toLowerCase().includes('program') ||
-                        currentQuestionData.question.toLowerCase().includes('implement');
 
   function handleNext() {
     if (!currentAnswer.trim() && !code.trim()) {
@@ -96,7 +125,7 @@ export default function Interview() {
 
     setAnswers(prev => [...prev, {
       question: currentQuestionData.question,
-      answer: isCodeQuestion ? code : currentAnswer
+      answer: isCodeQuestion(currentQuestionData.question) ? code : currentAnswer
     }]);
 
     setCurrentAnswer("");
@@ -162,8 +191,11 @@ export default function Interview() {
 
             <Card className="border-primary/20 shadow-lg">
               <CardContent className="pt-6">
-                {isCodeQuestion ? (
-                  <CodeEditor value={code} onChange={(value) => setCode(value ?? "")} />
+                {isCodeQuestion(currentQuestionData.question) ? (
+                  <CodeEditor 
+                    value={code} 
+                    onChange={(value) => setCode(value ?? "")} 
+                  />
                 ) : (
                   <VoiceInput onTranscript={setCurrentAnswer} />
                 )}
