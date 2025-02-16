@@ -8,7 +8,6 @@ import Webcam from "@/components/webcam";
 import VoiceInput from "@/components/voice-input";
 import CodeEditor from "@/components/code-editor";
 import Timer from "@/components/timer";
-import WindowCheck from "@/components/window-check";
 import { apiRequest } from "@/lib/queryClient";
 import type { Interview } from "@shared/schema";
 
@@ -57,13 +56,7 @@ export default function Interview() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setTabSwitches(prev => {
-          const next = prev + 1;
-          if (next >= 3) {
-            submitMutation.mutate();
-          }
-          return next;
-        });
+        setTabSwitches(prev => prev + 1);
       }
     };
 
@@ -71,7 +64,7 @@ export default function Interview() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [submitMutation]);
+  }, []);
 
   if (!interview || !currentQuestionData) {
     return (
@@ -113,14 +106,12 @@ export default function Interview() {
       submitMutation.mutate();
     } else {
       setCurrentQuestion(prev => prev + 1);
-      // Clear previous speech synthesis queue
       window.speechSynthesis.cancel();
     }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5 p-6">
-      <WindowCheck />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-4">

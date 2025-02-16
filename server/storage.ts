@@ -1,4 +1,6 @@
-import { type Interview, type InsertInterview } from "@shared/schema";
+import { type Interview, type InsertInterview, interviews } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   createInterview(interview: InsertInterview): Promise<Interview>;
@@ -6,40 +8,39 @@ export interface IStorage {
   updateInterview(id: number, data: Partial<Interview>): Promise<Interview>;
 }
 
-export class MemStorage implements IStorage {
-  private interviews: Map<number, Interview>;
-  private currentId: number;
-
-  constructor() {
-    this.interviews = new Map();
-    this.currentId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async createInterview(insertInterview: InsertInterview): Promise<Interview> {
-    const id = this.currentId++;
-    const interview: Interview = {
-      ...insertInterview,
-      id,
-      completed: false,
-    };
-    this.interviews.set(id, interview);
+    const [interview] = await db
+      .insert(interviews)
+      .values(insertInterview)
+      .returning();
     return interview;
   }
 
   async getInterview(id: number): Promise<Interview | undefined> {
-    return this.interviews.get(id);
+    const [interview] = await db
+      .select()
+      .from(interviews)
+      .where(eq(interviews.id, id));
+    return interview;
   }
 
   async updateInterview(id: number, data: Partial<Interview>): Promise<Interview> {
-    const interview = await this.getInterview(id);
-    if (!interview) {
+    const [updated] = await db
+      .update(interviews)
+      .set({
+        ...data,
+        ...(data.completed ? { completedAt: new Date() } : {}),
+      })
+      .where(eq(interviews.id, id))
+      .returning();
+
+    if (!updated) {
       throw new Error("Interview not found");
     }
-    
-    const updated = { ...interview, ...data };
-    this.interviews.set(id, updated);
+
     return updated;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
