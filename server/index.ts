@@ -97,19 +97,30 @@ process.on('SIGINT', async () => {
       throw setupError;
     }
 
-    // Bind to port 5000 consistently
-    const PORT = 5000;
+    // Use port 5000 by default or from environment
+    const PORT = process.env.PORT || 5000;
+    const HOST = '0.0.0.0';
 
-    server.listen(PORT, () => {
-      log(`Server running on port ${PORT}`);
-    }).on('error', (error: any) => {
-      if (error.code === 'EADDRINUSE') {
-        console.error(`Port ${PORT} is already in use. Please ensure no other process is using this port.`);
-      } else {
-        console.error('Server startup error:', error);
-      }
-      process.exit(1);
-    });
+    function startServer(retryCount = 0) {
+      server.listen(PORT, HOST, () => {
+        log(`Server running on ${HOST}:${PORT}`);
+      }).on('error', (error: any) => {
+        if (error.code === 'EADDRINUSE') {
+          if (retryCount < 3) {
+            log(`Port ${PORT} is in use, waiting 1s before retry...`);
+            setTimeout(() => startServer(retryCount + 1), 1000);
+          } else {
+            console.error(`Port ${PORT} is still in use after ${retryCount} retries. Please ensure no other process is using this port.`);
+            process.exit(1);
+          }
+        } else {
+          console.error('Server startup error:', error);
+          process.exit(1);
+        }
+      });
+    }
+
+    startServer();
 
   } catch (error) {
     console.error('Application startup error:', error);
