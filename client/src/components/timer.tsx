@@ -5,11 +5,12 @@ import { Card } from "@/components/ui/card";
 interface TimerProps {
   duration: number; // in seconds
   onComplete: () => void;
+  initialElapsed?: number; // Add initialElapsed prop to support continuing from a specific point
 }
 
-export default function Timer({ duration, onComplete }: TimerProps) {
-  const [timeLeft, setTimeLeft] = useState(duration);
-  
+export default function Timer({ duration, onComplete, initialElapsed = 0 }: TimerProps) {
+  const [timeLeft, setTimeLeft] = useState(duration - initialElapsed);
+
   useEffect(() => {
     if (timeLeft <= 0) {
       onComplete();
@@ -17,7 +18,14 @@ export default function Timer({ duration, onComplete }: TimerProps) {
     }
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
+      setTimeLeft(prev => {
+        if (prev <= 0) {
+          clearInterval(timer);
+          onComplete();
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);

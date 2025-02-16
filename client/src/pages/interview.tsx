@@ -14,9 +14,10 @@ import type { Interview } from "@shared/schema";
 function isCodeQuestion(question: string): boolean {
   const codeKeywords = [
     'code', 'program', 'implement', 'function', 'write', 'algorithm',
-    'class', 'method', 'data structure', 'leetcode', 'coding'
+    'class', 'method', 'data structure', 'leetcode', 'coding', 'sql', 'query',
+    'database', 'select', 'insert', 'update', 'delete'
   ];
-  return codeKeywords.some(keyword => 
+  return codeKeywords.some(keyword =>
     question.toLowerCase().includes(keyword)
   );
 }
@@ -26,23 +27,23 @@ export default function Interview() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<{question: string, answer: string}[]>([]);
+  const [answers, setAnswers] = useState<{ question: string, answer: string }[]>([]);
   const [tabSwitches, setTabSwitches] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [code, setCode] = useState("");
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const TOTAL_DURATION = 1200; // 20 minutes in seconds
 
   const { data: interview } = useQuery<Interview>({
     queryKey: [`/api/interviews/${id}`],
   });
 
-  const { data: currentQuestionData, isLoading: isLoadingQuestion } = useQuery<{question: string}>({
+  const { data: currentQuestionData, isLoading: isLoadingQuestion } = useQuery<{ question: string }>({
     queryKey: [`/api/questions/${interview?.role}/${currentQuestion}`],
     enabled: !!interview?.role,
   });
 
-  // Speak the question using native Web Speech API
   useEffect(() => {
     if (currentQuestionData?.question) {
       window.speechSynthesis.cancel();
@@ -50,7 +51,7 @@ export default function Interview() {
       utterance.rate = 0.9;
       utterance.pitch = 1;
       const voices = window.speechSynthesis.getVoices();
-      const englishVoice = voices.find(voice => 
+      const englishVoice = voices.find(voice =>
         voice.lang.startsWith('en') && voice.name.includes('Google')
       );
       if (englishVoice) {
@@ -74,7 +75,7 @@ export default function Interview() {
         completed: true,
         tabSwitches,
         score: finalScore,
-        duration: 900 - timeLeft,
+        duration: elapsedTime,
       });
     },
     onSuccess: () => {
@@ -84,15 +85,16 @@ export default function Interview() {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 0) {
+      setElapsedTime(prev => {
+        if (prev >= TOTAL_DURATION) {
           clearInterval(timer);
           submitMutation.mutate();
-          return 0;
+          return TOTAL_DURATION;
         }
-        return prev - 1;
+        return prev + 1;
       });
     }, 1000);
+
     return () => clearInterval(timer);
   }, [submitMutation]);
 
@@ -156,9 +158,10 @@ export default function Interview() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-4">
             <Webcam />
-            <Timer 
-              duration={900}
+            <Timer
+              duration={TOTAL_DURATION}
               onComplete={() => submitMutation.mutate()}
+              initialElapsed={elapsedTime}
             />
             <Card className="border-primary/20 shadow-lg">
               <CardContent className="pt-6">
@@ -177,9 +180,9 @@ export default function Interview() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Question {currentQuestion + 1} of 10</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       if (currentQuestionData.question) {
                         window.speechSynthesis.cancel();
@@ -206,9 +209,9 @@ export default function Interview() {
             <Card className="border-primary/20 shadow-lg">
               <CardContent className="pt-6">
                 {isCodeQuestion(currentQuestionData.question) ? (
-                  <CodeEditor 
-                    value={code} 
-                    onChange={(value) => setCode(value ?? "")} 
+                  <CodeEditor
+                    value={code}
+                    onChange={(value) => setCode(value ?? "")}
                   />
                 ) : (
                   <VoiceInput onTranscript={setCurrentAnswer} />
@@ -222,7 +225,7 @@ export default function Interview() {
                   >
                     Abort Interview
                   </Button>
-                  <Button 
+                  <Button
                     onClick={handleNext}
                     className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
                   >
