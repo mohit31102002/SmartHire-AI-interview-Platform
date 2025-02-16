@@ -8,7 +8,6 @@ import Webcam from "@/components/webcam";
 import VoiceInput from "@/components/voice-input";
 import Timer from "@/components/timer";
 import { apiRequest } from "@/lib/queryClient";
-import WindowCheck from "@/components/window-check";
 
 export default function Interview() {
   const { id } = useParams();
@@ -64,7 +63,17 @@ export default function Interview() {
   }, [submitMutation]);
 
   if (!interview || !questions) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5 p-6 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   function handleNext() {
@@ -81,9 +90,9 @@ export default function Interview() {
       question: questions[currentQuestion],
       answer: currentAnswer
     }]);
-    
+
     setCurrentAnswer("");
-    
+
     if (currentQuestion === questions.length - 1) {
       submitMutation.mutate();
     } else {
@@ -93,7 +102,6 @@ export default function Interview() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5 p-6">
-      <WindowCheck />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-4">
