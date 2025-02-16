@@ -4,7 +4,7 @@ import { jobRoles } from "@shared/schema";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { Laptop, Database, LineChart, Code } from "lucide-react";
+import { Laptop, Database, LineChart, Code, Brain } from "lucide-react";
 
 const roleIcons = {
   "Full Stack Developer": Laptop,
@@ -41,23 +41,29 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">AI Interview Platform</h1>
-          <p className="text-muted-foreground">
-            Select your role to begin a 15-minute technical interview
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5 p-6">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center gap-2">
+            <Brain className="w-12 h-12 text-primary" />
+            <h1 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">
+              SmartHire AI Interview
+            </h1>
+          </div>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Experience the future of technical interviews with our AI-powered platform. 
+            Select your role to begin a 15-minute assessment.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {jobRoles.map((role) => {
             const Icon = roleIcons[role];
             return (
-              <Card key={role} className="hover:shadow-lg transition-shadow">
+              <Card key={role} className="hover:shadow-lg transition-all hover:scale-105">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-5 w-5 text-primary" />
                     {role}
                   </CardTitle>
                   <CardDescription>
@@ -66,7 +72,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <Button 
-                    className="w-full"
+                    className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
                     onClick={() => startInterview(role)}
                     disabled={isStarting}
                   >
