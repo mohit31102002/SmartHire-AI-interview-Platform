@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
 import { insertInterviewSchema } from "@shared/schema";
-import { questions } from "@shared/questions";
+import { generateQuestion } from "./services/gemini";
 
 export async function registerRoutes(app: Express) {
   const httpServer = createServer(app);
@@ -20,11 +20,11 @@ export async function registerRoutes(app: Express) {
   app.get("/api/interviews/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     const interview = await storage.getInterview(id);
-    
+
     if (!interview) {
       return res.status(404).json({ error: "Interview not found" });
     }
-    
+
     res.json(interview);
   });
 
@@ -34,15 +34,15 @@ export async function registerRoutes(app: Express) {
     res.json(interview);
   });
 
-  app.get("/api/questions/:role", (req, res) => {
-    const role = req.params.role;
-    const roleQuestions = questions[role as keyof typeof questions];
-    
-    if (!roleQuestions) {
-      return res.status(404).json({ error: "Role not found" });
+  app.get("/api/questions/:role/:number", async (req, res) => {
+    try {
+      const { role, number } = req.params;
+      const question = await generateQuestion(role, parseInt(number));
+      res.json({ question });
+    } catch (error) {
+      console.error('Error generating question:', error);
+      res.status(500).json({ error: "Failed to generate question" });
     }
-
-    res.json(roleQuestions);
   });
 
   return httpServer;

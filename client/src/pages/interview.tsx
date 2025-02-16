@@ -22,8 +22,8 @@ export default function Interview() {
     queryKey: [`/api/interviews/${id}`],
   });
 
-  const { data: questions } = useQuery({
-    queryKey: [`/api/questions/${interview?.role}`],
+  const { data: currentQuestionData, isLoading: isLoadingQuestion } = useQuery({
+    queryKey: [`/api/questions/${interview?.role}/${currentQuestion}`],
     enabled: !!interview?.role,
   });
 
@@ -62,7 +62,7 @@ export default function Interview() {
     };
   }, [submitMutation]);
 
-  if (!interview || !questions) {
+  if (!interview || !currentQuestionData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5 p-6 flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -87,13 +87,13 @@ export default function Interview() {
     }
 
     setAnswers(prev => [...prev, {
-      question: questions[currentQuestion],
+      question: currentQuestionData.question,
       answer: currentAnswer
     }]);
 
     setCurrentAnswer("");
 
-    if (currentQuestion === questions.length - 1) {
+    if (currentQuestion === 9) { // 10 questions total
       submitMutation.mutate();
     } else {
       setCurrentQuestion(prev => prev + 1);
@@ -123,14 +123,20 @@ export default function Interview() {
             <Card className="border-primary/20 shadow-lg bg-gradient-to-br from-background to-primary/5">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Question {currentQuestion + 1} of {questions.length}</span>
+                  <span>Question {currentQuestion + 1} of 10</span>
                   <span className="text-sm font-normal text-muted-foreground">
                     Time Remaining
                   </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-medium">{questions[currentQuestion]}</p>
+                <p className="text-lg font-medium">
+                  {isLoadingQuestion ? (
+                    <span className="animate-pulse">Loading question...</span>
+                  ) : (
+                    currentQuestionData.question
+                  )}
+                </p>
               </CardContent>
             </Card>
 
@@ -150,13 +156,17 @@ export default function Interview() {
                     onClick={handleNext}
                     className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
                   >
-                    {currentQuestion === questions.length - 1 ? "Finish" : "Next Question"}
+                    {currentQuestion === 9 ? "Finish" : "Next Question"}
                   </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
+
+        <footer className="text-center text-sm text-muted-foreground mt-8">
+          Designed and developed by The Code Buster
+        </footer>
       </div>
     </div>
   );
