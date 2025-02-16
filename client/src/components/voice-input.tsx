@@ -13,31 +13,42 @@ export default function VoiceInput({ onTranscript }: VoiceInputProps) {
   const [transcript, setTranscript] = useState("");
   const { toast } = useToast();
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const finalTranscriptRef = useRef("");
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
       recognitionRef.current = new webkitSpeechRecognition();
       recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
+      recognitionRef.current.interimResults = false; // Only get final results
+      recognitionRef.current.lang = 'en-US'; // Set language explicitly
 
       recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-        const current = event.resultIndex;
-        const transcriptText = event.results[current][0].transcript;
-
-        setTranscript(prev => {
-          const newTranscript = prev + ' ' + transcriptText;
-          onTranscript(newTranscript.trim());
-          return newTranscript;
-        });
+        const result = event.results[event.results.length - 1];
+        if (result.isFinal) {
+          const newTranscript = result[0].transcript;
+          setTranscript(prev => {
+            const updated = prev + ' ' + newTranscript;
+            const trimmed = updated.trim();
+            onTranscript(trimmed);
+            return trimmed;
+          });
+        }
       };
 
       recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
-        toast({
-          title: "Speech Recognition Error",
-          description: "Please try speaking again or type your answer",
-          variant: "destructive",
-        });
+        if (event.error === 'no-speech') {
+          toast({
+            description: "No speech detected. Please speak again.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Speech Recognition Error",
+            description: "Please try speaking again or type your answer",
+            variant: "destructive",
+          });
+        }
         setIsListening(false);
       };
     }
@@ -55,6 +66,7 @@ export default function VoiceInput({ onTranscript }: VoiceInputProps) {
       setIsListening(false);
     } else {
       setTranscript(""); // Clear previous transcript
+      finalTranscriptRef.current = ""; // Reset final transcript
       recognitionRef.current?.start();
       setIsListening(true);
     }
@@ -74,7 +86,7 @@ export default function VoiceInput({ onTranscript }: VoiceInputProps) {
         <Button
           variant={isListening ? "destructive" : "default"}
           onClick={handleStartStop}
-          className={isListening ? "bg-red-500 hover:bg-red-600" : ""}
+          className={`${isListening ? "bg-red-500 hover:bg-red-600" : ""} transition-colors`}
         >
           {isListening ? <MicOff className="mr-2" /> : <Mic className="mr-2" />}
           {isListening ? "Stop Recording" : "Start Recording"}
@@ -91,11 +103,18 @@ export default function VoiceInput({ onTranscript }: VoiceInputProps) {
         onPaste={preventCopyPaste}
         onCut={preventCopyPaste}
         placeholder="Speak your answer or type here..."
-        className="min-h-[150px] resize-none"
+        className="min-h-[150px] resize-none shadow-sm"
       />
 
       <p className="text-sm text-muted-foreground">
-        {isListening ? "Listening... Speak clearly into your microphone" : "Click 'Start Recording' to answer with voice"}
+        {isListening ? (
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            Listening... Speak clearly into your microphone
+          </span>
+        ) : (
+          "Click 'Start Recording' to answer with voice"
+        )}
       </p>
     </div>
   );
