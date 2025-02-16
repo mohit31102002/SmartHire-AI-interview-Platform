@@ -13,6 +13,7 @@ const languages = [
   { value: "java", label: "Java" },
   { value: "cpp", label: "C++" },
   { value: "c", label: "C" },
+  { value: "sql", label: "SQL" },
 ];
 
 export default function CodeEditor({ value, onChange }: CodeEditorProps) {
@@ -49,6 +50,9 @@ export default function CodeEditor({ value, onChange }: CodeEditorProps) {
           automaticLayout: true,
           scrollBeyondLastLine: false,
           wordWrap: "on",
+          tabSize: 2,
+          formatOnPaste: true,
+          formatOnType: true,
         }}
       />
     </div>
