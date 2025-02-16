@@ -86,9 +86,16 @@ export default function VoiceInput({ onTranscript }: VoiceInputProps) {
         <Button
           variant={isListening ? "destructive" : "default"}
           onClick={handleStartStop}
-          className={`${isListening ? "bg-red-500 hover:bg-red-600" : ""} transition-colors`}
+          className={`${isListening ? "bg-red-500 hover:bg-red-600" : ""} transition-colors relative`}
         >
-          {isListening ? <MicOff className="mr-2" /> : <Mic className="mr-2" />}
+          {isListening ? (
+            <>
+              <MicOff className="mr-2" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
+            </>
+          ) : (
+            <Mic className="mr-2" />
+          )}
           {isListening ? "Stop Recording" : "Start Recording"}
         </Button>
       </div>
@@ -103,7 +110,7 @@ export default function VoiceInput({ onTranscript }: VoiceInputProps) {
         onPaste={preventCopyPaste}
         onCut={preventCopyPaste}
         placeholder="Speak your answer or type here..."
-        className="min-h-[150px] resize-none shadow-sm"
+        className="min-h-[150px] resize-none shadow-sm border-primary/20"
       />
 
       <p className="text-sm text-muted-foreground">
