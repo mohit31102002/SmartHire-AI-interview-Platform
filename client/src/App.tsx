@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
@@ -13,50 +12,39 @@ import Signup from "./pages/signup";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const [, navigate] = useLocation();
-  const token = localStorage.getItem('token');
 
   React.useEffect(() => {
+    const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
     }
-  }, [token, navigate]);
+  }, [navigate]);
 
-  if (!token) {
-    return null;
-  }
-
-  return <Component {...rest} />;
+  return localStorage.getItem('token') ? <Component {...rest} /> : null;
 }
 
 function Router() {
-  const [location] = useLocation();
   const token = localStorage.getItem('token');
-  const publicPaths = ['/login', '/signup'];
+  const [location] = useLocation();
 
   React.useEffect(() => {
-    if (token && publicPaths.includes(location)) {
-      window.location.href = '/';
-    } else if (!token && !publicPaths.includes(location)) {
+    if (!token && location !== '/login' && location !== '/signup') {
       window.location.href = '/login';
     }
   }, [token, location]);
 
   return (
     <Switch>
-      <Route path="/login">
-        {token ? <Home /> : <Login />}
-      </Route>
-      <Route path="/signup">
-        {token ? <Home /> : <Signup />}
-      </Route>
-      <Route path="/">
-        <ProtectedRoute component={Home} />
-      </Route>
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
       <Route path="/interview/:id">
         <ProtectedRoute component={Interview} />
       </Route>
       <Route path="/results/:id">
         <ProtectedRoute component={Results} />
+      </Route>
+      <Route path="/">
+        <ProtectedRoute component={Home} />
       </Route>
       <Route component={NotFound} />
     </Switch>
