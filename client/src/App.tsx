@@ -33,19 +33,20 @@ function Router() {
     }
   }, [token, location]);
 
+  if (!token) {
+    return (
+      <Switch>
+        <Route path="/signup" component={Signup} />
+        <Route path="*" component={Login} />
+      </Switch>
+    );
+  }
+
   return (
     <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/signup" component={Signup} />
-      <Route path="/interview/:id">
-        <ProtectedRoute component={Interview} />
-      </Route>
-      <Route path="/results/:id">
-        <ProtectedRoute component={Results} />
-      </Route>
-      <Route path="/">
-        <ProtectedRoute component={Home} />
-      </Route>
+      <Route path="/interview/:id" component={Interview} />
+      <Route path="/results/:id" component={Results} />
+      <Route path="/" component={Home} />
       <Route component={NotFound} />
     </Switch>
   );
