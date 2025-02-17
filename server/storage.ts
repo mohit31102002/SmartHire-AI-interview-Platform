@@ -8,6 +8,7 @@ export interface IStorage {
   updateInterview(id: number, data: Partial<Interview>): Promise<Interview>;
   createUser(user: InsertUser): Promise<InsertUser>;
   getUserByUsername(username: string): Promise<InsertUser | undefined>;
+  getUserById(id: number): Promise<InsertUser | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -53,7 +54,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<InsertUser | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserById(id: number): Promise<InsertUser | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, id));
     return user;
   }
 }

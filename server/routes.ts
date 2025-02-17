@@ -59,14 +59,30 @@ export async function registerRoutes(app: Express) {
     const token = jwt.sign({ userId: user.id }, JWT_SECRET);
     res.json({ token });
   });
-  app.post("/api/interviews", async (req, res) => {
+  app.post("/api/interviews", authMiddleware, async (req: AuthRequest, res) => {
     const parsed = insertInterviewSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error });
     }
 
-    const interview = await storage.createInterview(parsed.data);
+    const interview = await storage.createInterview({
+      ...parsed.data,
+      userId: req.userId
+    });
     res.json(interview);
+  });
+
+  app.get("/api/user/interviews", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const user = await storage.getUserById(req.userId!);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      const interviews = await storage.getUserInterviews(user.username);
+      res.json(interviews);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch interviews" });
+    }
   });
 
   app.get("/api/interviews/:id", async (req, res) => {
