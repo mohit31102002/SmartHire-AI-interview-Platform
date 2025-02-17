@@ -10,20 +10,34 @@ export default function Signup() {
   const [, navigate] = useLocation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const res = await apiRequest("POST", "/api/signup", { username, password });
+      const data = await res.json();
+      
       if (res.ok) {
         navigate("/login");
       } else {
-        const data = await res.json();
-        setError(data.error);
+        setError(data.error || "Failed to create account");
       }
     } catch (err) {
-      setError("Failed to sign up");
+      setError("Connection error. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -40,15 +54,26 @@ export default function Signup() {
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              disabled={isLoading}
             />
             <Input
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+            />
+            <Input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={isLoading}
             />
             {error && <p className="text-red-500 text-sm">{error}</p>}
-            <Button type="submit" className="w-full">Sign Up</Button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Creating Account..." : "Sign Up"}
+            </Button>
             <p className="text-center text-sm">
               Already have an account?{" "}
               <a href="/login" className="text-primary hover:underline">

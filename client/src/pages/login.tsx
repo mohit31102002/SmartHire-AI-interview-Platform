@@ -11,13 +11,13 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (!username || !password) {
-      setError("Please enter both username and password");
-      return;
-    }
+    setIsLoading(true);
+    setError("");
+
     try {
       const res = await apiRequest("POST", "/api/login", { username, password });
       const data = await res.json();
@@ -26,11 +26,12 @@ export default function Login() {
         localStorage.setItem('token', data.token);
         navigate("/");
       } else {
-        setError(data.error || "Invalid username or password");
+        setError(data.error || "Invalid credentials");
       }
     } catch (err) {
-      console.error("Login error:", err);
       setError("Connection error. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -47,15 +48,19 @@ export default function Login() {
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              disabled={isLoading}
             />
             <Input
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
             />
             {error && <p className="text-red-500 text-sm">{error}</p>}
-            <Button type="submit" className="w-full">Login</Button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Login"}
+            </Button>
             <p className="text-center text-sm">
               Don't have an account?{" "}
               <a href="/signup" className="text-primary hover:underline">
