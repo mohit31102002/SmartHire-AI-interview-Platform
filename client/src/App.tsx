@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
@@ -24,6 +25,15 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
 }
 
 function Router() {
+  const token = localStorage.getItem('token');
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!token && window.location.pathname !== '/signup') {
+      navigate('/login');
+    }
+  }, [token]);
+
   return (
     <Switch>
       <Route path="/login" component={Login} />

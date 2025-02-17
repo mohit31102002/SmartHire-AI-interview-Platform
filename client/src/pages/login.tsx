@@ -14,18 +14,23 @@ export default function Login() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    if (!username || !password) {
+      setError("Please enter both username and password");
+      return;
+    }
     try {
       const res = await apiRequest("POST", "/api/login", { username, password });
       const data = await res.json();
       
-      if (res.ok) {
+      if (res.ok && data.token) {
         localStorage.setItem('token', data.token);
         navigate("/");
       } else {
         setError(data.error || "Invalid username or password");
       }
     } catch (err) {
-      setError("Failed to login. Please try again.");
+      console.error("Login error:", err);
+      setError("Connection error. Please try again.");
     }
   }
 
