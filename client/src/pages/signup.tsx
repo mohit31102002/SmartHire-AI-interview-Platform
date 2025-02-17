@@ -31,6 +31,7 @@ export default function Signup() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5 flex items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
+          <CardTitle className="text-center mb-2">AI Interview Platform</CardTitle>
           <CardTitle>Sign Up</CardTitle>
         </CardHeader>
         <CardContent>

@@ -14,7 +14,7 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
   const [, navigate] = useLocation();
   const token = localStorage.getItem('token');
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!token) {
       navigate('/login');
     }

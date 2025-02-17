@@ -16,14 +16,16 @@ export default function Login() {
     e.preventDefault();
     try {
       const res = await apiRequest("POST", "/api/login", { username, password });
+      const data = await res.json();
+      
       if (res.ok) {
+        localStorage.setItem('token', data.token);
         navigate("/");
       } else {
-        const data = await res.json();
-        setError(data.error);
+        setError(data.error || "Invalid username or password");
       }
     } catch (err) {
-      setError("Failed to login");
+      setError("Failed to login. Please try again.");
     }
   }
 
@@ -31,6 +33,7 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5 flex items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
+          <CardTitle className="text-center mb-2">AI Interview Platform</CardTitle>
           <CardTitle>Login</CardTitle>
         </CardHeader>
         <CardContent>
