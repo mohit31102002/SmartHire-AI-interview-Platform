@@ -13,32 +13,42 @@ import Signup from "./pages/signup";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const [, navigate] = useLocation();
-  
+  const token = localStorage.getItem('token');
+
   React.useEffect(() => {
-    const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
     }
-  }, [navigate]);
+  }, [token, navigate]);
 
-  return localStorage.getItem('token') ? <Component {...rest} /> : null;
+  if (!token) {
+    return null;
+  }
+
+  return <Component {...rest} />;
 }
 
 function Router() {
   const [location] = useLocation();
   const token = localStorage.getItem('token');
-  const isAuthRoute = location === '/login' || location === '/signup';
+  const publicPaths = ['/login', '/signup'];
 
   React.useEffect(() => {
-    if (!token && !isAuthRoute) {
+    if (token && publicPaths.includes(location)) {
+      window.location.href = '/';
+    } else if (!token && !publicPaths.includes(location)) {
       window.location.href = '/login';
     }
-  }, [token, isAuthRoute]);
+  }, [token, location]);
 
   return (
     <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/signup" component={Signup} />
+      <Route path="/login">
+        {token ? <Home /> : <Login />}
+      </Route>
+      <Route path="/signup">
+        {token ? <Home /> : <Signup />}
+      </Route>
       <Route path="/">
         <ProtectedRoute component={Home} />
       </Route>
