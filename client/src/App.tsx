@@ -9,14 +9,33 @@ import Results from "@/pages/results";
 import Login from "./pages/login";
 import Signup from "./pages/signup";
 
+function ProtectedRoute({ component: Component, ...rest }: any) {
+  const [, navigate] = useLocation();
+  const token = localStorage.getItem('token');
+
+  React.useEffect(() => {
+    if (!token) {
+      navigate('/login');
+    }
+  }, [token, navigate]);
+
+  return token ? <Component {...rest} /> : null;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
-      <Route path="/" component={Home} />
-      <Route path="/interview/:id" component={Interview} />
-      <Route path="/results/:id" component={Results} />
+      <Route path="/">
+        <ProtectedRoute component={Home} />
+      </Route>
+      <Route path="/interview/:id">
+        <ProtectedRoute component={Interview} />
+      </Route>
+      <Route path="/results/:id">
+        <ProtectedRoute component={Results} />
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
