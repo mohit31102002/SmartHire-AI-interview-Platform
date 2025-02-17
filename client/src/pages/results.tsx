@@ -128,7 +128,7 @@ export default function Results() {
         </div>
 
         <footer className="text-center text-sm text-muted-foreground mt-8">
-          Designed and developed by The Code Buster
+          Designed & developed by Rangda Boyz💙
         </footer>
       </div>
     </div>

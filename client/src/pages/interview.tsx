@@ -17,20 +17,44 @@ const MAX_TAB_SWITCHES = 3;
 
 function isCodeQuestion(question: string): boolean {
   const codeKeywords = [
-    'code', 'program', 'implement', 'function', 'write', 'algorithm',
-    'class', 'method', 'data structure', 'leetcode', 'coding', 'sql', 'query',
-    'database', 'select', 'insert', 'update', 'delete', 'html', 'css', 'javascript',
-    'react', 'component', 'nodejs', 'express', 'api', 'endpoint'
+    "code",
+    "program",
+    "implement",
+    "function",
+    "write",
+    "algorithm",
+    "class",
+    "method",
+    "data structure",
+    "leetcode",
+    "coding",
+    "sql",
+    "query",
+    "database",
+    "select",
+    "insert",
+    "update",
+    "delete",
+    "html",
+    "css",
+    "javascript",
+    "react",
+    "component",
+    "nodejs",
+    "express",
+    "api",
+    "endpoint",
   ];
-  
+
   // Check if the question explicitly asks for code
-  const hasCodeKeyword = codeKeywords.some(keyword =>
-    question.toLowerCase().includes(keyword)
+  const hasCodeKeyword = codeKeywords.some((keyword) =>
+    question.toLowerCase().includes(keyword),
   );
-  
+
   // Check if the question starts with common coding task phrases
-  const startsWithCodingTask = /^(write|create|implement|develop|code|build)/i.test(question);
-  
+  const startsWithCodingTask =
+    /^(write|create|implement|develop|code|build)/i.test(question);
+
   return hasCodeKeyword || startsWithCodingTask;
 }
 
@@ -39,7 +63,9 @@ export default function Interview() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<{ question: string, answer: string }[]>([]);
+  const [answers, setAnswers] = useState<
+    { question: string; answer: string }[]
+  >([]);
   const [tabSwitches, setTabSwitches] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [code, setCode] = useState("");
@@ -52,7 +78,9 @@ export default function Interview() {
     queryKey: [`/api/interviews/${id}`],
   });
 
-  const { data: currentQuestionData, isLoading: isLoadingQuestion } = useQuery<{ question: string }>({
+  const { data: currentQuestionData, isLoading: isLoadingQuestion } = useQuery<{
+    question: string;
+  }>({
     queryKey: [`/api/questions/${interview?.role}/${currentQuestion}`],
     enabled: !!interview?.role,
   });
@@ -73,12 +101,14 @@ export default function Interview() {
   useEffect(() => {
     if (currentQuestionData?.question) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(currentQuestionData.question);
+      const utterance = new SpeechSynthesisUtterance(
+        currentQuestionData.question,
+      );
       utterance.rate = 0.9;
       utterance.pitch = 1;
       const voices = window.speechSynthesis.getVoices();
-      const englishVoice = voices.find(voice =>
-        voice.lang.startsWith('en') && voice.name.includes('Google')
+      const englishVoice = voices.find(
+        (voice) => voice.lang.startsWith("en") && voice.name.includes("Google"),
       );
       if (englishVoice) {
         utterance.voice = englishVoice;
@@ -111,7 +141,7 @@ export default function Interview() {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setElapsedTime(prev => {
+      setElapsedTime((prev) => {
         if (prev >= TOTAL_DURATION) {
           clearInterval(timer);
           submitMutation.mutate();
@@ -127,13 +157,14 @@ export default function Interview() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setTabSwitches(prev => {
+        setTabSwitches((prev) => {
           const newCount = prev + 1;
           if (newCount >= MAX_TAB_SWITCHES) {
             submitMutation.mutate();
             toast({
               title: "Interview Terminated",
-              description: "Maximum tab switches exceeded. Your interview has been automatically submitted.",
+              description:
+                "Maximum tab switches exceeded. Your interview has been automatically submitted.",
               variant: "destructive",
             });
           }
@@ -171,20 +202,25 @@ export default function Interview() {
       return;
     }
 
-    const answer = isCodeQuestion(currentQuestionData.question) ? code : currentAnswer;
-    setAnswers(prev => [...prev, {
-      question: currentQuestionData.question,
-      answer
-    }]);
+    const answer = isCodeQuestion(currentQuestionData.question)
+      ? code
+      : currentAnswer;
+    setAnswers((prev) => [
+      ...prev,
+      {
+        question: currentQuestionData.question,
+        answer,
+      },
+    ]);
     if (answer.trim().length > 50) {
-      setScore(prev => prev + 1);
+      setScore((prev) => prev + 1);
     }
     setCurrentAnswer("");
     setCode("");
     if (currentQuestion === 9) {
       submitMutation.mutate();
     } else {
-      setCurrentQuestion(prev => prev + 1);
+      setCurrentQuestion((prev) => prev + 1);
       window.speechSynthesis.cancel();
     }
   }
@@ -213,7 +249,10 @@ export default function Interview() {
             <Card className="border-primary/20 shadow-lg">
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground">
-                  Tab switches: <span className="font-mono text-destructive">{tabSwitches}/{MAX_TAB_SWITCHES}</span>
+                  Tab switches:{" "}
+                  <span className="font-mono text-destructive">
+                    {tabSwitches}/{MAX_TAB_SWITCHES}
+                  </span>
                 </p>
               </CardContent>
             </Card>
@@ -230,7 +269,9 @@ export default function Interview() {
                     onClick={() => {
                       if (currentQuestionData.question) {
                         window.speechSynthesis.cancel();
-                        const utterance = new SpeechSynthesisUtterance(currentQuestionData.question);
+                        const utterance = new SpeechSynthesisUtterance(
+                          currentQuestionData.question,
+                        );
                         window.speechSynthesis.speak(utterance);
                       }
                     }}
@@ -282,7 +323,7 @@ export default function Interview() {
         </div>
 
         <footer className="text-center text-sm text-muted-foreground mt-8">
-          Designed and developed by The Code Buster
+          Designed & Developed by The Rangda Boyz❤️
         </footer>
       </div>
     </div>

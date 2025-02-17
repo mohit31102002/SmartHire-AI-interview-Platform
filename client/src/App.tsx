@@ -14,22 +14,22 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
   const [, navigate] = useLocation();
 
   React.useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [navigate]);
 
-  return localStorage.getItem('token') ? <Component {...rest} /> : null;
+  return localStorage.getItem("token") ? <Component {...rest} /> : null;
 }
 
 function Router() {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const [location] = useLocation();
 
   React.useEffect(() => {
-    if (!token && location !== '/login' && location !== '/signup') {
-      window.location.href = '/login';
+    if (!token && location !== "/login" && location !== "/signup") {
+      window.location.href = "/login";
     }
   }, [token, location]);
 
