@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -15,7 +15,7 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
   const [, navigate] = useLocation();
   const token = localStorage.getItem('token');
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!token) {
       navigate('/login');
     }
@@ -26,17 +26,14 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
 
 function Router() {
   const token = localStorage.getItem('token');
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
+  const isAuthPage = location === '/login' || location === '/signup';
 
-  useEffect(() => {
-    if (!token && location !== '/signup' && location !== '/login') {
-      navigate('/login');
+  React.useEffect(() => {
+    if (!token && !isAuthPage) {
+      window.location.href = '/login';
     }
-  }, [token, location, navigate]);
-
-  if (!token && location !== '/signup' && location !== '/login') {
-    return <Login />;
-  }
+  }, [token, isAuthPage]);
 
   return (
     <Switch>
