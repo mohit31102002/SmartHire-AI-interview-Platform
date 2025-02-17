@@ -42,8 +42,11 @@ async function startServer() {
       res.status(500).json({ error: err.message || "Internal Server Error" });
     });
 
-    // Create HTTP server
+    // Create HTTP server with increased timeout
     server = createServer(app);
+    server.setTimeout(120000); // 2 minute timeout
+    server.keepAliveTimeout = 65000; // slightly higher than 60 second nginx timeout
+    server.headersTimeout = 66000; // slightly higher than keepAliveTimeout
 
     const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -57,20 +60,25 @@ async function startServer() {
       log("Static file serving setup completed");
     }
 
-    // Start listening
+    // Start listening with error handling and auto-reconnect
     await new Promise<void>((resolve, reject) => {
-      server!.listen(PORT, HOST)
-        .once('listening', () => {
-          log(`Server started successfully on ${HOST}:${PORT}`);
-          resolve();
-        })
-        .once('error', (error: NodeJS.ErrnoException) => {
-          if (error.code === 'EADDRINUSE') {
-            reject(new Error(`Port ${PORT} is already in use`));
-          } else {
-            reject(error);
-          }
-        });
+      const startListening = () => {
+        server!.listen(PORT, HOST)
+          .once('listening', () => {
+            log(`Server started successfully on ${HOST}:${PORT}`);
+            resolve();
+          })
+          .once('error', (error: NodeJS.ErrnoException) => {
+            if (error.code === 'EADDRINUSE') {
+              log(`Port ${PORT} is in use, retrying in 5 seconds...`);
+              setTimeout(startListening, 5000);
+            } else {
+              reject(error);
+            }
+          });
+      };
+      
+      startListening();
     });
   } catch (error) {
     console.error('Failed to start server:', error);
