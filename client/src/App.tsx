@@ -12,28 +12,22 @@ import Login from "./pages/login";
 import Signup from "./pages/signup";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
-  const [, navigate] = useLocation();
   const token = localStorage.getItem('token');
-
-  React.useEffect(() => {
-    if (!token) {
-      navigate('/login');
-    }
-  }, [token, navigate]);
-
-  return token ? <Component {...rest} /> : null;
+  if (!token) {
+    window.location.href = '/login';
+    return null;
+  }
+  return <Component {...rest} />;
 }
 
 function Router() {
   const token = localStorage.getItem('token');
   const [location] = useLocation();
-  const isAuthPage = location === '/login' || location === '/signup';
 
-  React.useEffect(() => {
-    if (!token && !isAuthPage) {
-      window.location.href = '/login';
-    }
-  }, [token, isAuthPage]);
+  if (!token && location !== '/signup' && location !== '/login') {
+    window.location.href = '/login';
+    return null;
+  }
 
   return (
     <Switch>
