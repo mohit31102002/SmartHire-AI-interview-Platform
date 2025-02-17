@@ -14,6 +14,9 @@ const languages = [
   { value: "cpp", label: "C++" },
   { value: "c", label: "C" },
   { value: "sql", label: "SQL" },
+  { value: "html", label: "HTML" },
+  { value: "css", label: "CSS" },
+  { value: "typescript", label: "TypeScript" },
 ];
 
 export default function CodeEditor({ value, onChange }: CodeEditorProps) {

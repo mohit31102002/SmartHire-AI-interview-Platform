@@ -19,11 +19,19 @@ function isCodeQuestion(question: string): boolean {
   const codeKeywords = [
     'code', 'program', 'implement', 'function', 'write', 'algorithm',
     'class', 'method', 'data structure', 'leetcode', 'coding', 'sql', 'query',
-    'database', 'select', 'insert', 'update', 'delete'
+    'database', 'select', 'insert', 'update', 'delete', 'html', 'css', 'javascript',
+    'react', 'component', 'nodejs', 'express', 'api', 'endpoint'
   ];
-  return codeKeywords.some(keyword =>
+  
+  // Check if the question explicitly asks for code
+  const hasCodeKeyword = codeKeywords.some(keyword =>
     question.toLowerCase().includes(keyword)
   );
+  
+  // Check if the question starts with common coding task phrases
+  const startsWithCodingTask = /^(write|create|implement|develop|code|build)/i.test(question);
+  
+  return hasCodeKeyword || startsWithCodingTask;
 }
 
 export default function Interview() {
@@ -204,9 +212,6 @@ export default function Interview() {
             />
             <Card className="border-primary/20 shadow-lg">
               <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">
-                  Current Score: <span className="font-mono">{score}/10</span>
-                </p>
                 <p className="text-sm text-muted-foreground">
                   Tab switches: <span className="font-mono text-destructive">{tabSwitches}/{MAX_TAB_SWITCHES}</span>
                 </p>

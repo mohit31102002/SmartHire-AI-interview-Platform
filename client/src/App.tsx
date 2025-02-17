@@ -26,13 +26,17 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
 
 function Router() {
   const token = localStorage.getItem('token');
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
 
   useEffect(() => {
-    if (!token && window.location.pathname !== '/signup') {
+    if (!token && location !== '/signup' && location !== '/login') {
       navigate('/login');
     }
-  }, [token]);
+  }, [token, location, navigate]);
+
+  if (!token && location !== '/signup' && location !== '/login') {
+    return <Login />;
+  }
 
   return (
     <Switch>
